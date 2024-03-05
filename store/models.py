@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
 
 
 class Category(models.Model):
@@ -41,7 +42,22 @@ class Basket(models.Model):
     created_date=models.DateTimeField(auto_now_add=True)
     updated_date=models.DateTimeField(auto_now=True)
     is_active=models.BooleanField(default=True)
-
+    
+    @property
+    def cart_items(self):
+        return self.cartitem.filter(is_order_placed=False)
+    
+    @property
+    def cart_item_count(self):
+        return self.cart_items.count()
+    
+    @property
+    def basket_total(self):
+        basket_items=self.cart_items
+        if basket_items:
+            total=sum([bi.item_total for bi  in basket_items]) 
+            return total
+        return 0
 
 class BasketItem(models.Model):
     product_object=models.ForeignKey(Product,on_delete=models.CASCADE)
@@ -50,4 +66,22 @@ class BasketItem(models.Model):
     created_date=models.DateTimeField(auto_now_add=True)
     updated_date=models.DateTimeField(auto_now=True)
     is_active=models.BooleanField(default=True)
+    size_object=models.ForeignKey(Size,on_delete=models.CASCADE,null=True)
+    is_order_placed=models.BooleanField(default=False)
+    
+    @property
+    def item_total(self):
+        return self.qty*self.product_object.price
+        
+
+def create_basket(sender,instance,created,**kwargs):
+    #created=T|F
+    #sender=User
+    #instance=soumya
+    
+    if created:
+        Basket.objects.create(owner=instance)
+        
+post_save.connect(create_basket,sender=User)
+
 
