@@ -136,5 +136,15 @@ class CartItemUpdateQuatityView(View):
             
         return redirect("basket-items")
     
-                 
+class CheckOutView(View):
+    
+    def get(self,request,*args, **kwargs):
+        return render(request,"checkout.html")           
+    
+    def post(self,request,*args, **kwargs):
+        email=request.POST.get("email")
+        phone=request.POST.get("phone")
+        address=request.POST.get("address")
+        print(email,phone,address)
+        return redirect("index")
 
